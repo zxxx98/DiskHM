@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"io/fs"
+	"path/filepath"
 	"strings"
 )
 
@@ -12,9 +13,16 @@ type udevInfo struct {
 }
 
 func readUdevInfo(fsys fs.FS, name string) (udevInfo, error) {
-	raw, err := fs.ReadFile(fsys, "run/udev/data/b8:0")
+	deviceNumber, err := readDeviceNumber(fsys, name)
 	if err != nil {
-		fallback, fallbackErr := fs.ReadFile(fsys, "run/udev/data/b8_0")
+		return udevInfo{}, err
+	}
+
+	primaryPath := filepath.ToSlash(filepath.Join("run/udev/data", "b"+deviceNumber))
+	raw, err := fs.ReadFile(fsys, primaryPath)
+	if err != nil {
+		fallbackPath := filepath.ToSlash(filepath.Join("run/udev/data", "b"+strings.ReplaceAll(deviceNumber, ":", "_")))
+		fallback, fallbackErr := fs.ReadFile(fsys, fallbackPath)
 		if fallbackErr != nil {
 			return udevInfo{}, err
 		}
@@ -33,8 +41,6 @@ func readUdevInfo(fsys fs.FS, name string) (udevInfo, error) {
 			info.Transport = parseUdevValue(strings.TrimPrefix(line, "E:ID_BUS="))
 		}
 	}
-
-	_ = name
 	return info, nil
 }
 

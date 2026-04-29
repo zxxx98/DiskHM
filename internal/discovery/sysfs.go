@@ -75,3 +75,12 @@ func readSizeBytes(fsys fs.FS, name string) (uint64, error) {
 
 	return sectors * 512, nil
 }
+
+func readDeviceNumber(fsys fs.FS, name string) (string, error) {
+	raw, err := fs.ReadFile(fsys, filepath.ToSlash(filepath.Join("sys/block", name, "dev")))
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(raw)), nil
+}

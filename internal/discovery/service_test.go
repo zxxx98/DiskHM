@@ -3,6 +3,7 @@ package discovery
 import (
 	"context"
 	"os"
+	"slices"
 	"testing"
 	"testing/fstest"
 )
@@ -13,6 +14,7 @@ func TestDiscoverSnapshotFromFixtures(t *testing.T) {
 	fsys := fstest.MapFS{
 		"sys/block/sda/queue/rotational": &fstest.MapFile{Data: []byte("1\n")},
 		"sys/block/sda/size":             &fstest.MapFile{Data: []byte("3907029168\n")},
+		"sys/block/sda/dev":              &fstest.MapFile{Data: []byte("8:0\n")},
 		"proc/self/mountinfo":            &fstest.MapFile{Data: []byte("29 22 8:1 / /mnt/media rw,relatime - ext4 /dev/sda1 rw\n")},
 		"run/udev/data/b8:0":             &fstest.MapFile{Data: []byte("E:ID_MODEL=WD_Red\nE:ID_SERIAL_SHORT=WD-ABC123\n")},
 	}
@@ -77,5 +79,76 @@ func TestDiscoverSnapshotFromTestdataFixtures(t *testing.T) {
 	}
 	if snapshot.Disks[0].Model != "WD Red" {
 		t.Fatalf("snapshot.Disks[0].Model = %q, want %q", snapshot.Disks[0].Model, "WD Red")
+	}
+}
+
+func TestDiscoverSnapshotParsesMountinfoOptionalFields(t *testing.T) {
+	t.Parallel()
+
+	fsys := fstest.MapFS{
+		"sys/block/nvme0n1/queue/rotational": &fstest.MapFile{Data: []byte("0\n")},
+		"sys/block/nvme0n1/size":             &fstest.MapFile{Data: []byte("1953525168\n")},
+		"sys/block/nvme0n1/dev":              &fstest.MapFile{Data: []byte("259:0\n")},
+		"proc/self/mountinfo":                &fstest.MapFile{Data: []byte("32 29 259:1 / /mnt/fast rw,relatime shared:12 master:34 - ext4 /dev/nvme0n1p1 rw\n")},
+		"run/udev/data/b259:0":               &fstest.MapFile{Data: []byte("E:ID_MODEL=Fast_SSD\nE:ID_SERIAL_SHORT=FAST-001\n")},
+	}
+
+	snapshot, err := NewService(fsys).Snapshot(context.Background())
+	if err != nil {
+		t.Fatalf("Snapshot() error = %v", err)
+	}
+
+	if len(snapshot.Disks) != 1 {
+		t.Fatalf("len(snapshot.Disks) = %d, want 1", len(snapshot.Disks))
+	}
+
+	if len(snapshot.Mounts) != 1 {
+		t.Fatalf("len(snapshot.Mounts) = %d, want 1", len(snapshot.Mounts))
+	}
+
+	if snapshot.Mounts[0].Source != "/dev/nvme0n1p1" {
+		t.Fatalf("snapshot.Mounts[0].Source = %q, want %q", snapshot.Mounts[0].Source, "/dev/nvme0n1p1")
+	}
+
+	if snapshot.Mounts[0].DiskID != snapshot.Disks[0].ID {
+		t.Fatalf("snapshot.Mounts[0].DiskID = %q, want %q", snapshot.Mounts[0].DiskID, snapshot.Disks[0].ID)
+	}
+}
+
+func TestDiscoverSnapshotUsesPerDiskUdevData(t *testing.T) {
+	t.Parallel()
+
+	fsys := fstest.MapFS{
+		"sys/block/sda/queue/rotational": &fstest.MapFile{Data: []byte("1\n")},
+		"sys/block/sda/size":             &fstest.MapFile{Data: []byte("3907029168\n")},
+		"sys/block/sda/dev":              &fstest.MapFile{Data: []byte("8:0\n")},
+		"sys/block/sdb/queue/rotational": &fstest.MapFile{Data: []byte("1\n")},
+		"sys/block/sdb/size":             &fstest.MapFile{Data: []byte("1953514584\n")},
+		"sys/block/sdb/dev":              &fstest.MapFile{Data: []byte("8:16\n")},
+		"proc/self/mountinfo":            &fstest.MapFile{Data: []byte("29 22 8:1 / /mnt/media rw,relatime - ext4 /dev/sda1 rw\n30 22 8:17 / /mnt/archive rw,relatime - ext4 /dev/sdb1 rw\n")},
+		"run/udev/data/b8:0":             &fstest.MapFile{Data: []byte("E:ID_MODEL=WD_Red\nE:ID_SERIAL_SHORT=WD-ABC123\n")},
+		"run/udev/data/b8:16":            &fstest.MapFile{Data: []byte("E:ID_MODEL=Seagate_IronWolf\nE:ID_SERIAL_SHORT=SG-XYZ789\n")},
+	}
+
+	snapshot, err := NewService(fsys).Snapshot(context.Background())
+	if err != nil {
+		t.Fatalf("Snapshot() error = %v", err)
+	}
+
+	if len(snapshot.Disks) != 2 {
+		t.Fatalf("len(snapshot.Disks) = %d, want 2", len(snapshot.Disks))
+	}
+
+	models := []string{snapshot.Disks[0].Model, snapshot.Disks[1].Model}
+	serials := []string{snapshot.Disks[0].Serial, snapshot.Disks[1].Serial}
+	slices.Sort(models)
+	slices.Sort(serials)
+
+	if !slices.Equal(models, []string{"Seagate IronWolf", "WD Red"}) {
+		t.Fatalf("disk models = %#v, want distinct per-disk udev data", models)
+	}
+
+	if !slices.Equal(serials, []string{"SG-XYZ789", "WD-ABC123"}) {
+		t.Fatalf("disk serials = %#v, want distinct per-disk udev data", serials)
 	}
 }
