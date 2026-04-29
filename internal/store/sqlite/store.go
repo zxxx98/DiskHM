@@ -36,7 +36,7 @@ func (s *Store) UpsertDisk(ctx context.Context, disk domain.Disk) error {
 		disk.Model,
 		disk.Serial,
 		disk.Transport,
-		disk.SizeBytes,
+		int64(disk.SizeBytes),
 		boolToInt(disk.Rotational),
 	)
 	return err
@@ -55,6 +55,7 @@ func (s *Store) ListDisks(ctx context.Context) ([]domain.Disk, error) {
 	var disks []domain.Disk
 	for rows.Next() {
 		var disk domain.Disk
+		var sizeBytes int64
 		var rotational int
 		if err := rows.Scan(
 			&disk.ID,
@@ -63,11 +64,12 @@ func (s *Store) ListDisks(ctx context.Context) ([]domain.Disk, error) {
 			&disk.Model,
 			&disk.Serial,
 			&disk.Transport,
-			&disk.SizeBytes,
+			&sizeBytes,
 			&rotational,
 		); err != nil {
 			return nil, err
 		}
+		disk.SizeBytes = uint64(sizeBytes)
 		disk.Rotational = rotational != 0
 		disks = append(disks, disk)
 	}

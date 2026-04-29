@@ -9,7 +9,7 @@ type Disk struct {
 	Model      string
 	Serial     string
 	Transport  string
-	SizeBytes  int64
+	SizeBytes  uint64
 	Rotational bool
 }
 

@@ -25,7 +25,7 @@ func TestStoreUpsertDiskAndAppendEvent(t *testing.T) {
 		Model:      "WD Red",
 		Serial:     "WD-123456",
 		Transport:  "sata",
-		SizeBytes:  4000787030016,
+		SizeBytes:  uint64(4000787030016),
 		Rotational: true,
 	}
 
