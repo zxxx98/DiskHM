@@ -11,7 +11,6 @@ var ErrDiskBusy = errors.New("disk is busy")
 
 type Executor interface {
 	Standby(context.Context, string) error
-	CheckState(context.Context, string) error
 }
 
 type Sampler interface {
