@@ -1,1 +1,10 @@
 .worktrees/
+bin/
+dist/
+node_modules/
+internal/webassets/dist/
+*.db
+*.db-shm
+*.db-wal
+.DS_Store
+.superpowers/
