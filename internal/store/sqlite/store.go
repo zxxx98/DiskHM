@@ -19,17 +19,25 @@ func (s *Store) UpsertDisk(ctx context.Context, disk domain.Disk) error {
 	_, err := s.db.ExecContext(
 		ctx,
 		`
-		INSERT INTO disks (id, name, model, path)
-		VALUES (?, ?, ?, ?)
+		INSERT INTO disks (id, name, path, model, serial, transport, size_bytes, rotational)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			name = excluded.name,
+			path = excluded.path,
 			model = excluded.model,
-			path = excluded.path
+			serial = excluded.serial,
+			transport = excluded.transport,
+			size_bytes = excluded.size_bytes,
+			rotational = excluded.rotational
 		`,
 		disk.ID,
 		disk.Name,
-		disk.Model,
 		disk.Path,
+		disk.Model,
+		disk.Serial,
+		disk.Transport,
+		disk.SizeBytes,
+		boolToInt(disk.Rotational),
 	)
 	return err
 }
@@ -37,7 +45,7 @@ func (s *Store) UpsertDisk(ctx context.Context, disk domain.Disk) error {
 func (s *Store) ListDisks(ctx context.Context) ([]domain.Disk, error) {
 	rows, err := s.db.QueryContext(
 		ctx,
-		`SELECT id, name, model, path FROM disks ORDER BY id`,
+		`SELECT id, name, path, model, serial, transport, size_bytes, rotational FROM disks ORDER BY id`,
 	)
 	if err != nil {
 		return nil, err
@@ -47,9 +55,20 @@ func (s *Store) ListDisks(ctx context.Context) ([]domain.Disk, error) {
 	var disks []domain.Disk
 	for rows.Next() {
 		var disk domain.Disk
-		if err := rows.Scan(&disk.ID, &disk.Name, &disk.Model, &disk.Path); err != nil {
+		var rotational int
+		if err := rows.Scan(
+			&disk.ID,
+			&disk.Name,
+			&disk.Path,
+			&disk.Model,
+			&disk.Serial,
+			&disk.Transport,
+			&disk.SizeBytes,
+			&rotational,
+		); err != nil {
 			return nil, err
 		}
+		disk.Rotational = rotational != 0
 		disks = append(disks, disk)
 	}
 
@@ -63,9 +82,11 @@ func (s *Store) ListDisks(ctx context.Context) ([]domain.Disk, error) {
 func (s *Store) AppendEvent(ctx context.Context, event domain.Event) error {
 	_, err := s.db.ExecContext(
 		ctx,
-		`INSERT INTO events (disk_id, kind) VALUES (?, ?)`,
+		`INSERT INTO events (disk_id, kind, message, created_at) VALUES (?, ?, ?, ?)`,
 		event.DiskID,
 		event.Kind,
+		event.Message,
+		event.CreatedAt,
 	)
 	return err
 }

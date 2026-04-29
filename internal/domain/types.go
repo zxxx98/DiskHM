@@ -1,13 +1,22 @@
 package domain
 
+import "time"
+
 type Disk struct {
-	ID    string
-	Name  string
-	Model string
-	Path  string
+	ID         string
+	Name       string
+	Path       string
+	Model      string
+	Serial     string
+	Transport  string
+	SizeBytes  int64
+	Rotational bool
 }
 
 type Event struct {
-	DiskID string
-	Kind   string
+	ID        int64
+	DiskID    string
+	Kind      string
+	Message   string
+	CreatedAt time.Time
 }
