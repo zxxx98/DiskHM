@@ -17,6 +17,10 @@ func Open(dsn string) (*Store, error) {
 	}
 
 	store := &Store{db: db}
+	if _, err := store.db.Exec(`PRAGMA foreign_keys = ON`); err != nil {
+		_ = db.Close()
+		return nil, err
+	}
 	if err := store.migrate(); err != nil {
 		_ = db.Close()
 		return nil, err

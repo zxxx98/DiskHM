@@ -2,6 +2,7 @@ package sqlitestore
 
 import (
 	"context"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -104,6 +105,90 @@ func TestMigrationDefaultsMatchTaskPlan(t *testing.T) {
 	assertColumnDefault(t, store, "disks", "rotational", "1")
 	assertColumnDefault(t, store, "events", "message", "''")
 	assertColumnDefault(t, store, "events", "created_at", "CURRENT_TIMESTAMP")
+}
+
+func TestAppendEventFailsForUnknownDisk(t *testing.T) {
+	t.Parallel()
+
+	store, err := Open("file:test-store-fk?mode=memory&cache=shared")
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer store.Close()
+
+	err = store.AppendEvent(context.Background(), domain.Event{
+		DiskID:  "missing-disk",
+		Kind:    "sleep_requested",
+		Message: "should fail",
+	})
+	if err == nil {
+		t.Fatal("AppendEvent() error = nil, want foreign key failure")
+	}
+}
+
+func TestUpsertDiskRejectsSizeBytesAboveMaxInt64(t *testing.T) {
+	t.Parallel()
+
+	store, err := Open("file:test-store-size?mode=memory&cache=shared")
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer store.Close()
+
+	err = store.UpsertDisk(context.Background(), domain.Disk{
+		ID:        "disk-big",
+		Name:      "big",
+		Path:      "/dev/big",
+		Model:     "Big Disk",
+		SizeBytes: uint64(math.MaxInt64) + 1,
+	})
+	if err == nil {
+		t.Fatal("UpsertDisk() error = nil, want size range failure")
+	}
+}
+
+func TestAppendEventWithZeroCreatedAtUsesDatabaseDefault(t *testing.T) {
+	t.Parallel()
+
+	store, err := Open("file:test-store-created-at?mode=memory&cache=shared")
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer store.Close()
+
+	ctx := context.Background()
+	if err := store.UpsertDisk(ctx, domain.Disk{
+		ID:   "disk-sda",
+		Name: "sda",
+		Path: "/dev/sda",
+	}); err != nil {
+		t.Fatalf("UpsertDisk() error = %v", err)
+	}
+
+	if err := store.AppendEvent(ctx, domain.Event{
+		DiskID:  "disk-sda",
+		Kind:    "sleep_requested",
+		Message: "timestamp from db",
+	}); err != nil {
+		t.Fatalf("AppendEvent() error = %v", err)
+	}
+
+	var gotCreatedAt string
+	if err := store.db.QueryRowContext(
+		ctx,
+		`SELECT created_at FROM events WHERE disk_id = ?`,
+		"disk-sda",
+	).Scan(&gotCreatedAt); err != nil {
+		t.Fatalf("QueryRowContext() error = %v", err)
+	}
+
+	if gotCreatedAt == "" {
+		t.Fatal("stored event created_at is empty")
+	}
+
+	if strings.Contains(gotCreatedAt, "0001-01-01") {
+		t.Fatalf("stored event created_at = %q, want database default timestamp", gotCreatedAt)
+	}
 }
 
 func assertColumnDefault(t *testing.T, store *Store, table string, column string, want string) {

@@ -3,6 +3,8 @@ package sqlitestore
 import (
 	"context"
 	_ "embed"
+	"errors"
+	"math"
 
 	"github.com/example/diskhm/internal/domain"
 )
@@ -16,6 +18,10 @@ func (s *Store) migrate() error {
 }
 
 func (s *Store) UpsertDisk(ctx context.Context, disk domain.Disk) error {
+	if disk.SizeBytes > math.MaxInt64 {
+		return errors.New("disk size_bytes exceeds SQLite INTEGER range")
+	}
+
 	_, err := s.db.ExecContext(
 		ctx,
 		`
@@ -69,6 +75,9 @@ func (s *Store) ListDisks(ctx context.Context) ([]domain.Disk, error) {
 		); err != nil {
 			return nil, err
 		}
+		if sizeBytes < 0 {
+			return nil, errors.New("disk size_bytes read from SQLite was negative")
+		}
 		disk.SizeBytes = uint64(sizeBytes)
 		disk.Rotational = rotational != 0
 		disks = append(disks, disk)
@@ -82,6 +91,17 @@ func (s *Store) ListDisks(ctx context.Context) ([]domain.Disk, error) {
 }
 
 func (s *Store) AppendEvent(ctx context.Context, event domain.Event) error {
+	if event.CreatedAt.IsZero() {
+		_, err := s.db.ExecContext(
+			ctx,
+			`INSERT INTO events (disk_id, kind, message) VALUES (?, ?, ?)`,
+			event.DiskID,
+			event.Kind,
+			event.Message,
+		)
+		return err
+	}
+
 	_, err := s.db.ExecContext(
 		ctx,
 		`INSERT INTO events (disk_id, kind, message, created_at) VALUES (?, ?, ?, ?)`,
