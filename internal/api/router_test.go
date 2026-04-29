@@ -24,4 +24,22 @@ func TestHealthEndpointReturnsJSON(t *testing.T) {
 	if got := rec.Header().Get("Content-Type"); got != "application/json" {
 		t.Fatalf("Content-Type = %q, want %q", got, "application/json")
 	}
+
+	if got := rec.Body.String(); got != `{"status":"ok"}` {
+		t.Fatalf("body = %q, want %q", got, `{"status":"ok"}`)
+	}
+}
+
+func TestHealthEndpointRejectsUnsupportedMethods(t *testing.T) {
+	t.Parallel()
+
+	router := api.NewRouter(api.Dependencies{})
+	req := httptest.NewRequest(http.MethodPost, "/api/health", nil)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusMethodNotAllowed)
+	}
 }

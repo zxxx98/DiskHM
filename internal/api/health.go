@@ -3,7 +3,7 @@ package api
 import "net/http"
 
 func registerHealthRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/api/health", healthHandler)
+	mux.HandleFunc("GET /api/health", healthHandler)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
