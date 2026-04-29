@@ -3,17 +3,17 @@ CREATE TABLE IF NOT EXISTS disks (
     name TEXT NOT NULL,
     path TEXT NOT NULL,
     model TEXT NOT NULL,
-    serial TEXT NOT NULL,
-    transport TEXT NOT NULL,
-    size_bytes INTEGER NOT NULL,
-    rotational INTEGER NOT NULL
+    serial TEXT NOT NULL DEFAULT '',
+    transport TEXT NOT NULL DEFAULT '',
+    size_bytes INTEGER NOT NULL DEFAULT 0,
+    rotational INTEGER NOT NULL DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     disk_id TEXT NOT NULL,
     kind TEXT NOT NULL,
-    message TEXT NOT NULL,
-    created_at DATETIME NOT NULL,
+    message TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (disk_id) REFERENCES disks(id)
 );

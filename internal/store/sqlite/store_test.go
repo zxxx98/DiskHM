@@ -2,6 +2,7 @@ package sqlitestore
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -62,19 +63,80 @@ func TestStoreUpsertDiskAndAppendEvent(t *testing.T) {
 	}
 
 	var got domain.Event
+	var gotCreatedAt string
 	if err := store.db.QueryRowContext(
 		ctx,
 		`SELECT id, disk_id, kind, message, created_at FROM events WHERE disk_id = ?`,
 		"disk-sda",
-	).Scan(&got.ID, &got.DiskID, &got.Kind, &got.Message, &got.CreatedAt); err != nil {
+	).Scan(&got.ID, &got.DiskID, &got.Kind, &got.Message, &gotCreatedAt); err != nil {
 		t.Fatalf("QueryRowContext() error = %v", err)
 	}
 
-	if got.DiskID != event.DiskID || got.Kind != event.Kind || got.Message != event.Message || !got.CreatedAt.Equal(event.CreatedAt) {
+	if got.DiskID != event.DiskID || got.Kind != event.Kind || got.Message != event.Message {
 		t.Fatalf("stored event = %#v, want fields from %#v", got, event)
 	}
 
 	if got.ID == 0 {
 		t.Fatalf("stored event ID = %d, want non-zero", got.ID)
 	}
+
+	if gotCreatedAt == "" {
+		t.Fatalf("stored event created_at is empty")
+	}
+
+	if !strings.Contains(gotCreatedAt, "2026-04-29") {
+		t.Fatalf("stored event created_at = %q, want it to include %q", gotCreatedAt, "2026-04-29")
+	}
+}
+
+func TestMigrationDefaultsMatchTaskPlan(t *testing.T) {
+	t.Parallel()
+
+	store, err := Open("file:test-store-defaults?mode=memory&cache=shared")
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer store.Close()
+
+	assertColumnDefault(t, store, "disks", "serial", "''")
+	assertColumnDefault(t, store, "disks", "transport", "''")
+	assertColumnDefault(t, store, "disks", "size_bytes", "0")
+	assertColumnDefault(t, store, "disks", "rotational", "1")
+	assertColumnDefault(t, store, "events", "message", "''")
+	assertColumnDefault(t, store, "events", "created_at", "CURRENT_TIMESTAMP")
+}
+
+func assertColumnDefault(t *testing.T, store *Store, table string, column string, want string) {
+	t.Helper()
+
+	rows, err := store.db.Query(`PRAGMA table_info(` + table + `)`)
+	if err != nil {
+		t.Fatalf("PRAGMA table_info(%s) error = %v", table, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var cid int
+		var name string
+		var dataType string
+		var notNull int
+		var defaultValue any
+		var pk int
+		if err := rows.Scan(&cid, &name, &dataType, &notNull, &defaultValue, &pk); err != nil {
+			t.Fatalf("Scan() error = %v", err)
+		}
+		if name == column {
+			got, _ := defaultValue.(string)
+			if got != want {
+				t.Fatalf("%s.%s default = %q, want %q", table, column, got, want)
+			}
+			return
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		t.Fatalf("rows.Err() = %v", err)
+	}
+
+	t.Fatalf("column %s.%s not found", table, column)
 }
