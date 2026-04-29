@@ -20,3 +20,30 @@ type Event struct {
 	Message   string
 	CreatedAt time.Time
 }
+
+type Mount struct {
+	Source string
+	Target string
+	DiskID string
+}
+
+type DiscoverySnapshot struct {
+	Disks  []Disk
+	Mounts []Mount
+}
+
+type TopologyNode struct {
+	ID    string
+	Kind  string
+	Label string
+}
+
+type TopologyEdge struct {
+	From string
+	To   string
+}
+
+type TopologyGraph struct {
+	Nodes []TopologyNode
+	Edges []TopologyEdge
+}
