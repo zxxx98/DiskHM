@@ -1,0 +1,240 @@
+<h2>Web 管理面板布局方向</h2>
+<p class="subtitle">面板目标是清爽、低打扰、适合反复查看磁盘状态；重点动作必须明确，避免误唤醒休眠盘。</p>
+
+<style>
+  .panel-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 22px;
+  }
+  .panel-choice {
+    border: 1px solid #d7dde5;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+  }
+  .panel-choice:hover {
+    border-color: #7c8da4;
+    box-shadow: 0 10px 26px rgba(24, 39, 75, .08);
+    transform: translateY(-1px);
+  }
+  .mini-app {
+    height: 340px;
+    background: #f5f7fa;
+    color: #1f2937;
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    font-size: 11px;
+    display: grid;
+  }
+  .topbar {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    border-bottom: 1px solid #dbe2ea;
+    background: #fff;
+    font-weight: 700;
+  }
+  .pill {
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    padding: 3px 8px;
+    background: #f8fafc;
+    font-weight: 600;
+    font-size: 10px;
+  }
+  .muted { color: #64748b; }
+  .main {
+    padding: 12px;
+    overflow: hidden;
+  }
+  .row {
+    display: grid;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+    border-bottom: 1px solid #e6ebf0;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #16a34a;
+  }
+  .status-dot.sleep { background: #64748b; }
+  .status-dot.wait { background: #eab308; }
+  .action {
+    border-radius: 6px;
+    background: #1f2937;
+    color: white;
+    padding: 5px 7px;
+    text-align: center;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .outline {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #334155;
+  }
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .metric {
+    background: #fff;
+    border: 1px solid #dbe2ea;
+    border-radius: 7px;
+    padding: 9px;
+  }
+  .drive-card {
+    background: #fff;
+    border: 1px solid #dbe2ea;
+    border-radius: 7px;
+    padding: 10px;
+    display: grid;
+    gap: 8px;
+  }
+  .bars {
+    display: grid;
+    gap: 5px;
+  }
+  .bar {
+    height: 7px;
+    border-radius: 999px;
+    background: #dbeafe;
+    overflow: hidden;
+  }
+  .bar > span {
+    display: block;
+    height: 100%;
+    background: #2563eb;
+  }
+  .topology {
+    display: grid;
+    gap: 10px;
+  }
+  .node {
+    background: #fff;
+    border: 1px solid #dbe2ea;
+    border-radius: 7px;
+    padding: 8px;
+  }
+  .connector {
+    height: 16px;
+    border-left: 2px solid #cbd5e1;
+    margin-left: 18px;
+  }
+  .choice-body {
+    padding: 12px 14px 14px;
+  }
+  .choice-body h3 {
+    margin: 0 0 6px;
+    font-size: 16px;
+  }
+  .choice-body p {
+    margin: 0;
+    color: #526174;
+    line-height: 1.45;
+  }
+  @media (max-width: 1000px) {
+    .panel-options { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="panel-options">
+  <div class="panel-choice" data-choice="a" onclick="toggleSelect(this)">
+    <div class="mini-app">
+      <div class="topbar">
+        <span>DiskHM</span>
+        <span class="pill">6 disks · 2 sleeping</span>
+      </div>
+      <div class="main">
+        <div class="row" style="grid-template-columns: 16px 1.1fr .8fr .8fr .8fr 76px 64px; font-weight: 700; color:#475569;">
+          <span></span><span>Disk</span><span>State</span><span>I/O</span><span>Timer</span><span>Info</span><span>Action</span>
+        </div>
+        <div class="row" style="grid-template-columns: 16px 1.1fr .8fr .8fr .8fr 76px 64px;">
+          <span class="status-dot"></span><span>sda · WD Red</span><span>Active</span><span>0 B/s</span><span>30 min</span><span>Cached</span><span class="action">Sleep</span>
+        </div>
+        <div class="row" style="grid-template-columns: 16px 1.1fr .8fr .8fr .8fr 76px 64px;">
+          <span class="status-dot sleep"></span><span>sdb · Seagate</span><span>Sleeping</span><span>-</span><span>Off</span><span>Safe</span><span class="action outline">Wake</span>
+        </div>
+        <div class="row" style="grid-template-columns: 16px 1.1fr .8fr .8fr .8fr 76px 64px;">
+          <span class="status-dot wait"></span><span>sdc · Toshiba</span><span>Waiting idle</span><span>12 KB/s</span><span>Now</span><span>Cached</span><span class="action outline">Cancel</span>
+        </div>
+        <div style="margin-top:12px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="metric"><b>Safe refresh</b><br><span class="muted">不会唤醒的字段默认自动更新</span></div>
+          <div class="metric"><b>Wake refresh</b><br><span class="muted">SMART/温度需要明确确认</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="choice-body">
+      <h3>A. 磁盘优先表格</h3>
+      <p>推荐方案。每块盘一行，状态、I/O、定时器和动作都在同一视线内，最适合管理多盘。</p>
+    </div>
+  </div>
+
+  <div class="panel-choice" data-choice="b" onclick="toggleSelect(this)">
+    <div class="mini-app">
+      <div class="topbar">
+        <span>DiskHM</span>
+        <span class="pill">Quiet mode</span>
+      </div>
+      <div class="main">
+        <div class="metric-grid">
+          <div class="metric"><b>Active</b><br><span style="font-size:24px;">4</span></div>
+          <div class="metric"><b>Sleeping</b><br><span style="font-size:24px;">2</span></div>
+          <div class="metric"><b>Pending</b><br><span style="font-size:24px;">1</span></div>
+          <div class="metric"><b>Wake risk</b><br><span style="font-size:24px;">0</span></div>
+        </div>
+        <div style="margin-top:10px; display:grid; gap:8px;">
+          <div class="drive-card">
+            <b>sda · media</b>
+            <div class="bars"><div class="bar"><span style="width:8%"></span></div></div>
+            <div style="display:flex; justify-content:space-between;"><span class="muted">idle 23m</span><span class="action">Sleep</span></div>
+          </div>
+          <div class="drive-card">
+            <b>sdc · backup</b>
+            <div class="bars"><div class="bar"><span style="width:42%"></span></div></div>
+            <div style="display:flex; justify-content:space-between;"><span class="muted">waiting for I/O</span><span class="action outline">Cancel</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="choice-body">
+      <h3>B. 状态看板</h3>
+      <p>更适合少量磁盘和快速总览。信息更轻，但批量管理、精确比较会弱一些。</p>
+    </div>
+  </div>
+
+  <div class="panel-choice" data-choice="c" onclick="toggleSelect(this)">
+    <div class="mini-app">
+      <div class="topbar">
+        <span>DiskHM</span>
+        <span class="pill">Topology</span>
+      </div>
+      <div class="main">
+        <div class="topology">
+          <div class="node"><b>Pool: tank</b><br><span class="muted">ZFS · 4 disks · active</span></div>
+          <div class="connector"></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div class="node">sda<br><span class="muted">active · 0 B/s</span></div>
+            <div class="node">sdb<br><span class="muted">sleeping</span></div>
+            <div class="node">sdc<br><span class="muted">active · 4 KB/s</span></div>
+            <div class="node">sdd<br><span class="muted">active · 0 B/s</span></div>
+          </div>
+          <div class="node"><b>USB backup</b><br><span class="muted">sde · unmounted · can sleep now</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="choice-body">
+      <h3>C. 拓扑视图</h3>
+      <p>适合后续支持 mdadm/LVM/ZFS/btrfs 关系。MVP 做它会拖慢进度，建议作为第二视图。</p>
+    </div>
+  </div>
+</div>
