@@ -2,13 +2,16 @@ package api
 
 import "net/http"
 
-type Dependencies struct{}
+type Dependencies struct {
+	TokenPlaintext string
+}
 
 func NewRouter(deps Dependencies) http.Handler {
-	_ = deps
-
 	mux := http.NewServeMux()
 	registerHealthRoutes(mux)
+	registerSessionRoutes(mux, deps)
+	registerDiskRoutes(mux)
+	registerEventRoutes(mux)
 
 	return mux
 }
