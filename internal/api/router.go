@@ -12,6 +12,8 @@ func NewRouter(deps Dependencies) http.Handler {
 	registerSessionRoutes(mux, deps)
 	registerDiskRoutes(mux)
 	registerEventRoutes(mux)
+	registerTopologyRoutes(mux)
+	registerSettingsRoutes(mux)
 
 	return mux
 }
