@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/diskhm --config /etc/diskhm/config.yaml
+ExecStart=/usr/local/bin/diskhm daemon --config /etc/diskhm/config.yaml
 Restart=on-failure
 RestartSec=5
 

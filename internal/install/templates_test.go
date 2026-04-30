@@ -13,7 +13,7 @@ func TestRenderServiceUnitIncludesExecStart(t *testing.T) {
 		t.Fatalf("RenderServiceUnit returned error: %v", err)
 	}
 
-	if !strings.Contains(unit, "ExecStart=/usr/local/bin/diskhm") {
+	if !strings.Contains(unit, "ExecStart=/usr/local/bin/diskhm daemon --config /etc/diskhm/config.yaml") {
 		t.Fatalf("service unit missing ExecStart: %q", unit)
 	}
 }

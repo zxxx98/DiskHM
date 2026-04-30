@@ -9,7 +9,7 @@
 
 ## Runtime
 
-- [ ] Start `diskhmd` with a local config file.
+- [ ] Start `diskhmd daemon --config /etc/diskhm/config.yaml`.
 - [ ] Open `http://127.0.0.1:9789/` and confirm the frontend loads.
 - [ ] Request `http://127.0.0.1:9789/api/health` and confirm it returns `{"status":"ok"}`.
 - [ ] Confirm a direct asset URL under `/assets/` is served.
@@ -20,3 +20,4 @@
 - [ ] Run `scripts/install-local.sh` on a Linux systemd host with `diskhmd` already built.
 - [ ] Confirm `/usr/local/bin/diskhm`, `/etc/diskhm/config.yaml`, and `/var/lib/diskhm` exist after install.
 - [ ] Confirm `systemctl status diskhm.service` shows the unit enabled and started.
+- [ ] Confirm `sudo diskhm start|stop|enable|disable|uninstall` work as expected.

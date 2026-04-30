@@ -38,6 +38,12 @@ systemctl daemon-reload
 systemctl enable --now diskhm.service
 
 echo "diskhm installed."
+echo "Service commands:"
+echo "  sudo diskhm start"
+echo "  sudo diskhm stop"
+echo "  sudo diskhm enable"
+echo "  sudo diskhm disable"
+echo "  sudo diskhm uninstall"
 echo "Web UI:"
 echo "  http://127.0.0.1:9789"
 if command -v hostname >/dev/null 2>&1; then

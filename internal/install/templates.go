@@ -10,7 +10,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=%s --config %s
+ExecStart=%s daemon --config %s
 Restart=on-failure
 RestartSec=5
 

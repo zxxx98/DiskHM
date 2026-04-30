@@ -55,6 +55,40 @@ Expected response:
 {"status":"ok"}
 ```
 
+## Installed commands
+
+After installation, the binary is installed as:
+
+- `/usr/local/bin/diskhm`
+
+Daemon mode:
+
+```bash
+diskhm daemon --config /etc/diskhm/config.yaml
+```
+
+Service management:
+
+```bash
+sudo diskhm start
+sudo diskhm stop
+sudo diskhm enable
+sudo diskhm disable
+sudo diskhm uninstall
+```
+
+Command behavior:
+
+- `start`: start `diskhm.service`
+- `stop`: stop `diskhm.service`
+- `enable`: enable `diskhm.service` on boot
+- `disable`: disable `diskhm.service` on boot
+- `uninstall`: stop and disable the service, then remove:
+  - `/usr/local/bin/diskhm`
+  - `/etc/systemd/system/diskhm.service`
+  - `/etc/diskhm`
+  - `/var/lib/diskhm`
+
 ## Configuration
 
 DiskHM reads its config from:
@@ -98,6 +132,12 @@ Build the daemon binary:
 
 ```bash
 GOPROXY=https://goproxy.cn,direct "C:\Program Files\Go\bin\go.exe" build -o diskhmd ./cmd/diskhmd
+```
+
+Run the daemon directly:
+
+```bash
+./diskhmd daemon --config /etc/diskhm/config.yaml
 ```
 
 Install locally on a Linux systemd host:
