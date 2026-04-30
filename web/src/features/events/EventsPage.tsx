@@ -1,7 +1,3 @@
-import { useCallback, useState } from 'react';
-
-import { useEventStream } from './useEventStream';
-
 type EventItem = {
   id: string;
   message: string;
@@ -12,20 +8,6 @@ type EventsPageProps = {
 };
 
 export function EventsPage({ events = [] }: EventsPageProps) {
-  const [streamEvents, setStreamEvents] = useState(events);
-
-  const handleMessage = useCallback((event: MessageEvent<string>) => {
-    setStreamEvents((current) => [
-      ...current,
-      {
-        id: `${current.length}-${event.data}`,
-        message: event.data,
-      },
-    ]);
-  }, []);
-
-  useEventStream(handleMessage);
-
   return (
     <main className="disk-page">
       <section className="disk-page__panel" aria-labelledby="events-page-title">
@@ -34,11 +16,11 @@ export function EventsPage({ events = [] }: EventsPageProps) {
             <p className="disk-page__eyebrow">Activity feed</p>
             <h1 id="events-page-title">Events</h1>
           </div>
-          <p className="disk-page__copy">Recent operational messages stream here as they arrive.</p>
+          <p className="disk-page__copy">Live stream hookup stays off until event transport and retention are wired.</p>
         </div>
 
         <ul aria-label="Event messages">
-          {streamEvents.map((event) => (
+          {events.map((event) => (
             <li key={event.id}>{event.message}</li>
           ))}
         </ul>

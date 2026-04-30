@@ -7,22 +7,14 @@ import { useEventStream } from './useEventStream';
 describe('EventsPage', () => {
   afterEach(() => {
     cleanup();
-    vi.unstubAllGlobals();
   });
 
-  it('renders event messages', () => {
-    vi.stubGlobal(
-      'EventSource',
-      vi.fn(() => ({
-        close: vi.fn(),
-        onmessage: null,
-      })),
-    );
-
+  it('renders placeholder event messages without opening a live stream', () => {
     render(<EventsPage events={[{ id: 'evt-1', message: 'disk queued' }]} />);
 
     expect(screen.getByRole('heading', { name: 'Events' })).toBeInTheDocument();
     expect(screen.getByText('disk queued')).toBeInTheDocument();
+    expect(screen.getByText('Live stream hookup stays off until event transport and retention are wired.')).toBeInTheDocument();
   });
 });
 
