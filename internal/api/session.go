@@ -28,7 +28,7 @@ func loginHandler(deps Dependencies) http.HandlerFunc {
 			return
 		}
 
-		if req.Token != deps.TokenPlaintext {
+		if deps.TokenPlaintext == "" || req.Token != deps.TokenPlaintext {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
