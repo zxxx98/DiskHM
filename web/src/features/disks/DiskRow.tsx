@@ -6,6 +6,8 @@ type DiskRowProps = {
 };
 
 export function DiskRow({ disk }: DiskRowProps) {
+  const disableSleepActions = disk.unsupported;
+
   return (
     <tr>
       <td>
@@ -21,7 +23,11 @@ export function DiskRow({ disk }: DiskRowProps) {
         <span className="disk-table__freshness">{disk.refreshFreshness}</span>
       </td>
       <td>
-        <DiskActions unsupported={disk.unsupported} />
+        <DiskActions
+          disableSleepNow={disableSleepActions}
+          disableSleepLater={disableSleepActions}
+          disableWakeRefresh={false}
+        />
       </td>
     </tr>
   );
