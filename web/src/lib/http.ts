@@ -12,24 +12,33 @@ export function getCsrfToken() {
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD';
 
+type JsonPrimitive = boolean | number | string | null;
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+type JsonObject = { [key: string]: JsonValue };
+type SupportedBody = FormData | URLSearchParams | string | JsonObject | null | undefined;
+
 type RequestOptions = Omit<RequestInit, 'body' | 'headers' | 'method'> & {
-  body?: BodyInit | object | null;
+  body?: SupportedBody;
   headers?: HeadersInit;
   method?: HttpMethod;
 };
 
 function normalizeBody(body: RequestOptions['body']) {
-  if (body == null || body instanceof FormData || typeof body === 'string' || body instanceof URLSearchParams) {
+  if (body == null || body instanceof FormData || body instanceof URLSearchParams || typeof body === 'string') {
     return body;
   }
 
   return JSON.stringify(body);
 }
 
+function isJsonBody(body: RequestOptions['body']): body is JsonObject {
+  return body != null && !(body instanceof FormData) && !(body instanceof URLSearchParams) && typeof body !== 'string';
+}
+
 function normalizeHeaders(method: HttpMethod, body: RequestOptions['body'], headers?: HeadersInit) {
   const nextHeaders = new Headers(headers);
 
-  if (body != null && !(body instanceof FormData) && !nextHeaders.has('Content-Type')) {
+  if (isJsonBody(body) && !nextHeaders.has('Content-Type')) {
     nextHeaders.set('Content-Type', 'application/json');
   }
 
