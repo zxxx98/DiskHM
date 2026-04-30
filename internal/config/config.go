@@ -29,7 +29,7 @@ type SleepConfig struct {
 func Default() Config {
 	return Config{
 		Server: ServerConfig{
-			ListenAddr: "127.0.0.1:9789",
+			ListenAddr: "0.0.0.0:9789",
 		},
 		Security: SecurityConfig{
 			TokenHash: "bootstrap-token-hash-change-me",

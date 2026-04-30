@@ -21,6 +21,10 @@ func TestLoadReturnsDefaultsWhenFileMissing(t *testing.T) {
 
 	defaults := config.Default()
 
+	if defaults.Server.ListenAddr != "0.0.0.0:9789" {
+		t.Fatalf("Default().Server.ListenAddr = %q, want %q", defaults.Server.ListenAddr, "0.0.0.0:9789")
+	}
+
 	if cfg.Server.ListenAddr != defaults.Server.ListenAddr {
 		t.Fatalf("Server.ListenAddr = %q, want %q", cfg.Server.ListenAddr, defaults.Server.ListenAddr)
 	}

@@ -26,7 +26,7 @@ install -m 0644 "${SERVICE_SOURCE}" "${SERVICE_DEST}"
 if [[ ! -f "${CONFIG_PATH}" ]]; then
   cat >"${CONFIG_PATH}" <<'EOF'
 server:
-  listen_addr: 127.0.0.1:9789
+  listen_addr: 0.0.0.0:9789
 security:
   token_hash: bootstrap-token-hash-change-me
 sleep:
@@ -38,3 +38,11 @@ systemctl daemon-reload
 systemctl enable --now diskhm.service
 
 echo "diskhm installed."
+echo "Web UI:"
+echo "  http://127.0.0.1:9789"
+if command -v hostname >/dev/null 2>&1; then
+  LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+  if [[ -n "${LAN_IP:-}" ]]; then
+    echo "  http://${LAN_IP}:9789"
+  fi
+fi
