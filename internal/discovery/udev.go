@@ -24,7 +24,7 @@ func readUdevInfo(fsys fs.FS, name string) (udevInfo, error) {
 		fallbackPath := filepath.ToSlash(filepath.Join("run/udev/data", "b"+strings.ReplaceAll(deviceNumber, ":", "_")))
 		fallback, fallbackErr := fs.ReadFile(fsys, fallbackPath)
 		if fallbackErr != nil {
-			return udevInfo{}, err
+			return udevInfo{}, nil
 		}
 		raw = fallback
 	}

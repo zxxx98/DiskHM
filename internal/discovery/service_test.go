@@ -152,3 +152,56 @@ func TestDiscoverSnapshotUsesPerDiskUdevData(t *testing.T) {
 		t.Fatalf("disk serials = %#v, want distinct per-disk udev data", serials)
 	}
 }
+
+func TestDiscoverSnapshotSkipsVirtualBlockDevices(t *testing.T) {
+	t.Parallel()
+
+	fsys := fstest.MapFS{
+		"sys/block/loop0/queue/rotational": &fstest.MapFile{Data: []byte("0\n")},
+		"sys/block/loop0/size":             &fstest.MapFile{Data: []byte("1024\n")},
+		"sys/block/loop0/dev":              &fstest.MapFile{Data: []byte("7:0\n")},
+		"sys/block/zram0/queue/rotational": &fstest.MapFile{Data: []byte("0\n")},
+		"sys/block/zram0/size":             &fstest.MapFile{Data: []byte("1024\n")},
+		"sys/block/zram0/dev":              &fstest.MapFile{Data: []byte("254:0\n")},
+		"sys/block/sda/queue/rotational":   &fstest.MapFile{Data: []byte("1\n")},
+		"sys/block/sda/size":               &fstest.MapFile{Data: []byte("3907029168\n")},
+		"sys/block/sda/dev":                &fstest.MapFile{Data: []byte("8:0\n")},
+		"proc/self/mountinfo":              &fstest.MapFile{Data: []byte("")},
+		"run/udev/data/b8:0":               &fstest.MapFile{Data: []byte("E:ID_MODEL=WD_Red\n")},
+	}
+
+	snapshot, err := NewService(fsys).Snapshot(context.Background())
+	if err != nil {
+		t.Fatalf("Snapshot() error = %v", err)
+	}
+
+	if len(snapshot.Disks) != 1 {
+		t.Fatalf("len(snapshot.Disks) = %d, want 1", len(snapshot.Disks))
+	}
+	if snapshot.Disks[0].Name != "sda" {
+		t.Fatalf("snapshot.Disks[0].Name = %q, want %q", snapshot.Disks[0].Name, "sda")
+	}
+}
+
+func TestDiscoverSnapshotToleratesMissingUdevData(t *testing.T) {
+	t.Parallel()
+
+	fsys := fstest.MapFS{
+		"sys/block/sda/queue/rotational": &fstest.MapFile{Data: []byte("1\n")},
+		"sys/block/sda/size":             &fstest.MapFile{Data: []byte("3907029168\n")},
+		"sys/block/sda/dev":              &fstest.MapFile{Data: []byte("8:0\n")},
+		"proc/self/mountinfo":            &fstest.MapFile{Data: []byte("")},
+	}
+
+	snapshot, err := NewService(fsys).Snapshot(context.Background())
+	if err != nil {
+		t.Fatalf("Snapshot() error = %v", err)
+	}
+
+	if len(snapshot.Disks) != 1 {
+		t.Fatalf("len(snapshot.Disks) = %d, want 1", len(snapshot.Disks))
+	}
+	if snapshot.Disks[0].Model != "" {
+		t.Fatalf("snapshot.Disks[0].Model = %q, want empty model when udev data is missing", snapshot.Disks[0].Model)
+	}
+}

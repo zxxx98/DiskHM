@@ -46,7 +46,7 @@ type EventsResponse = {
 };
 
 function DisksRoute() {
-  const { data } = useDisksQuery();
+  const { data, error, isLoading } = useDisksQuery();
   const { refreshWake, sleepAfter, sleepNow } = useDiskActions();
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -57,6 +57,24 @@ function DisksRoute() {
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Disk action failed.');
     }
+  }
+
+  if (isLoading) {
+    return (
+      <DiskTablePage
+        actionError={null}
+        disks={[]}
+      />
+    );
+  }
+
+  if (error) {
+    return (
+      <DiskTablePage
+        actionError={error instanceof Error ? error.message : 'Failed to load disks.'}
+        disks={[]}
+      />
+    );
   }
 
   return (

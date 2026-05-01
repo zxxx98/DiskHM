@@ -74,4 +74,23 @@ describe('App', () => {
     expect(await screen.findByText('WD Red')).toBeInTheDocument();
     expect(screen.getByText('/srv/data')).toBeInTheDocument();
   });
+
+  it('shows a disk loading error when the disks API request fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response('{"code":"internal_error","message":"failed to list disks"}', {
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }),
+      ),
+    );
+    window.history.pushState({}, '', '/disks');
+
+    renderApp();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('HTTP 500');
+  });
 });

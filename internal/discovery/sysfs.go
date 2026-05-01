@@ -23,6 +23,10 @@ func readDisks(fsys fs.FS) ([]domain.Disk, error) {
 		}
 
 		name := entry.Name()
+		if shouldSkipBlockDevice(name) {
+			continue
+		}
+
 		rotational, err := readRotational(fsys, name)
 		if err != nil {
 			return nil, err
@@ -51,6 +55,12 @@ func readDisks(fsys fs.FS) ([]domain.Disk, error) {
 	}
 
 	return disks, nil
+}
+
+func shouldSkipBlockDevice(name string) bool {
+	return strings.HasPrefix(name, "loop") ||
+		strings.HasPrefix(name, "ram") ||
+		strings.HasPrefix(name, "zram")
 }
 
 func readRotational(fsys fs.FS, name string) (bool, error) {

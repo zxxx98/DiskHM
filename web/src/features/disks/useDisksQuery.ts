@@ -9,5 +9,6 @@ export function useDisksQuery() {
       const payload = await fetchDisks();
       return payload.items;
     },
+    retry: false,
   });
 }
