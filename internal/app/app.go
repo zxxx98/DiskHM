@@ -14,7 +14,9 @@ type App struct {
 
 func New(cfg config.Config) *App {
 	return &App{
-		Handler: api.NewRouter(api.Dependencies{}),
+		Handler: api.NewRouter(api.Dependencies{
+			TokenPlaintext: cfg.Security.TokenHash,
+		}),
 		Config:  cfg,
 	}
 }
