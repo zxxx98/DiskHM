@@ -2,10 +2,12 @@ package discovery
 
 import (
 	"context"
+	"io/fs"
 	"os"
 	"slices"
 	"testing"
 	"testing/fstest"
+	"time"
 )
 
 func TestDiscoverSnapshotFromFixtures(t *testing.T) {
@@ -205,3 +207,66 @@ func TestDiscoverSnapshotToleratesMissingUdevData(t *testing.T) {
 		t.Fatalf("snapshot.Disks[0].Model = %q, want empty model when udev data is missing", snapshot.Disks[0].Model)
 	}
 }
+
+func TestDiscoverSnapshotAcceptsSymlinkBlockEntries(t *testing.T) {
+	t.Parallel()
+
+	fsys := symlinkBlockFS{
+		MapFS: fstest.MapFS{
+			"sys/block/sda/queue/rotational": &fstest.MapFile{Data: []byte("1\n")},
+			"sys/block/sda/size":             &fstest.MapFile{Data: []byte("3907029168\n")},
+			"sys/block/sda/dev":              &fstest.MapFile{Data: []byte("8:0\n")},
+			"proc/self/mountinfo":            &fstest.MapFile{Data: []byte("")},
+			"run/udev/data/b8:0":             &fstest.MapFile{Data: []byte("E:ID_MODEL=WD_Red\n")},
+		},
+		entries: []fs.DirEntry{
+			fakeDirEntry{name: "sda", mode: fs.ModeSymlink},
+		},
+	}
+
+	snapshot, err := NewService(fsys).Snapshot(context.Background())
+	if err != nil {
+		t.Fatalf("Snapshot() error = %v", err)
+	}
+
+	if len(snapshot.Disks) != 1 {
+		t.Fatalf("len(snapshot.Disks) = %d, want 1", len(snapshot.Disks))
+	}
+	if snapshot.Disks[0].Name != "sda" {
+		t.Fatalf("snapshot.Disks[0].Name = %q, want %q", snapshot.Disks[0].Name, "sda")
+	}
+}
+
+type symlinkBlockFS struct {
+	fstest.MapFS
+	entries []fs.DirEntry
+}
+
+func (s symlinkBlockFS) ReadDir(name string) ([]fs.DirEntry, error) {
+	if name == "sys/block" {
+		return s.entries, nil
+	}
+	return fs.ReadDir(s.MapFS, name)
+}
+
+type fakeDirEntry struct {
+	name string
+	mode fs.FileMode
+}
+
+func (f fakeDirEntry) Name() string               { return f.name }
+func (f fakeDirEntry) IsDir() bool                { return f.mode.IsDir() }
+func (f fakeDirEntry) Type() fs.FileMode          { return f.mode }
+func (f fakeDirEntry) Info() (fs.FileInfo, error) { return fakeFileInfo{name: f.name, mode: f.mode}, nil }
+
+type fakeFileInfo struct {
+	name string
+	mode fs.FileMode
+}
+
+func (f fakeFileInfo) Name() string       { return f.name }
+func (f fakeFileInfo) Size() int64        { return 0 }
+func (f fakeFileInfo) Mode() fs.FileMode  { return f.mode }
+func (f fakeFileInfo) ModTime() time.Time { return time.Unix(0, 0) }
+func (f fakeFileInfo) IsDir() bool        { return f.mode.IsDir() }
+func (f fakeFileInfo) Sys() any           { return nil }

@@ -18,7 +18,7 @@ func readDisks(fsys fs.FS) ([]domain.Disk, error) {
 
 	disks := make([]domain.Disk, 0, len(entries))
 	for _, entry := range entries {
-		if !entry.IsDir() {
+		if !entry.IsDir() && entry.Type()&fs.ModeSymlink == 0 {
 			continue
 		}
 
