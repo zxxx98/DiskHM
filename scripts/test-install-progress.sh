@@ -16,5 +16,6 @@ assert_script_contains "Downloading DiskHM source archive..."
 assert_script_contains "Extracting DiskHM source archive..."
 assert_script_contains "Building diskhmd with Go"
 assert_script_contains "Installing DiskHM locally..."
+assert_script_contains "bash ./scripts/install-local.sh"
 
 echo "installer progress output verified"

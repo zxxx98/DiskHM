@@ -54,4 +54,4 @@ cd "${SOURCE_DIR}"
 log "Building diskhmd with Go (this can take a while on ARM boards)..."
 go build -o diskhmd ./cmd/diskhmd
 log "Installing DiskHM locally..."
-./scripts/install-local.sh
+bash ./scripts/install-local.sh
