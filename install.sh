@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+log() {
+  printf '==> %s\n' "$*" >&2
+}
+
 if [[ "$(uname -s)" != "Linux" ]]; then
   echo "This installer currently supports Linux only." >&2
   exit 1
@@ -33,7 +37,9 @@ trap 'rm -rf "${WORK_DIR}"' EXIT
 ARCHIVE_URL="${DISKHM_ARCHIVE_URL:-https://github.com/zxxx98/DiskHM/archive/refs/heads/main.tar.gz}"
 ARCHIVE_PATH="${WORK_DIR}/diskhm.tar.gz"
 
+log "Downloading DiskHM source archive..."
 curl -fsSL "${ARCHIVE_URL}" -o "${ARCHIVE_PATH}"
+log "Extracting DiskHM source archive..."
 tar -xzf "${ARCHIVE_PATH}" -C "${WORK_DIR}"
 
 SOURCE_DIR="$(find "${WORK_DIR}" -mindepth 1 -maxdepth 1 -type d -name 'DiskHM-*' | head -n 1)"
@@ -45,5 +51,7 @@ fi
 export GOPROXY="${GOPROXY:-https://goproxy.cn,direct}"
 
 cd "${SOURCE_DIR}"
+log "Building diskhmd with Go (this can take a while on ARM boards)..."
 go build -o diskhmd ./cmd/diskhmd
+log "Installing DiskHM locally..."
 ./scripts/install-local.sh

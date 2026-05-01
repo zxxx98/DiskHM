@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+log() {
+  printf '==> %s\n' "$*" >&2
+}
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
@@ -18,12 +22,14 @@ if [[ ! -f "${BINARY_SOURCE}" ]]; then
   exit 1
 fi
 
+log "Installing binary, service, and configuration..."
 install -d -m 0755 "${CONFIG_DIR}"
 install -d -m 0755 "${DATA_DIR}"
 install -m 0755 "${BINARY_SOURCE}" "${BINARY_DEST}"
 install -m 0644 "${SERVICE_SOURCE}" "${SERVICE_DEST}"
 
 if [[ ! -f "${CONFIG_PATH}" ]]; then
+  log "Writing default configuration..."
   cat >"${CONFIG_PATH}" <<'EOF'
 server:
   listen_addr: 0.0.0.0:9789
@@ -34,6 +40,7 @@ sleep:
 EOF
 fi
 
+log "Reloading systemd and starting diskhm.service..."
 systemctl daemon-reload
 systemctl enable --now diskhm.service
 
