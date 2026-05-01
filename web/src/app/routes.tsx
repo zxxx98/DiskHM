@@ -2,6 +2,9 @@ import { useState, useEffectEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { RouteObject } from 'react-router-dom';
 
+import { DiskTablePage } from '../features/disks/DiskTablePage';
+import { useDiskActions } from '../features/disks/useDiskActions';
+import { useDisksQuery } from '../features/disks/useDisksQuery';
 import { EventsPage } from '../features/events/EventsPage';
 import { useEventStream } from '../features/events/useEventStream';
 import { SettingsPage } from '../features/settings/SettingsPage';
@@ -33,6 +36,40 @@ type EventItem = {
   message: string;
 };
 
+type EventsResponse = {
+  items: Array<{
+    diskId: string;
+    id: number;
+    kind: string;
+    message: string;
+  }>;
+};
+
+function DisksRoute() {
+  const { data } = useDisksQuery();
+  const { refreshWake, sleepAfter, sleepNow } = useDiskActions();
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  async function runAction(action: () => Promise<void>) {
+    try {
+      setActionError(null);
+      await action();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Disk action failed.');
+    }
+  }
+
+  return (
+    <DiskTablePage
+      actionError={actionError}
+      disks={data ?? []}
+      onSleepLater={(diskID) => void runAction(() => sleepAfter(diskID, 30))}
+      onSleepNow={(diskID) => void runAction(() => sleepNow(diskID))}
+      onWakeRefresh={(diskID) => void runAction(() => refreshWake(diskID))}
+    />
+  );
+}
+
 function TopologyRoute() {
   const { data } = useQuery({
     queryKey: ['topology'],
@@ -43,12 +80,25 @@ function TopologyRoute() {
 }
 
 function EventsRoute() {
-  const [events, setEvents] = useState<EventItem[]>([]);
+  const { data } = useQuery({
+    queryKey: ['events'],
+    queryFn: () => http.json<EventsResponse>('/api/events'),
+  });
+  const [streamedEvents, setStreamedEvents] = useState<EventItem[]>([]);
   const onMessage = useEffectEvent((event: MessageEvent<string>) => {
-    setEvents((current) => [{ id: `${Date.now()}-${current.length}`, message: event.data }, ...current].slice(0, 25));
+    const payload = JSON.parse(event.data) as { id: number; message: string };
+    setStreamedEvents((current) => [{ id: `stream-${payload.id}`, message: payload.message }, ...current].slice(0, 25));
   });
 
   useEventStream(onMessage);
+
+  const events: EventItem[] = [
+    ...(streamedEvents ?? []),
+    ...((data?.items ?? []).map((event) => ({
+      id: `history-${event.id}`,
+      message: event.message,
+    })) as EventItem[]),
+  ];
 
   return <EventsPage events={events} />;
 }
@@ -66,6 +116,10 @@ export const routes: RouteObject[] = [
   {
     path: '/',
     element: <LoginPage />,
+  },
+  {
+    path: '/disks',
+    element: <DisksRoute />,
   },
   {
     path: '/topology',

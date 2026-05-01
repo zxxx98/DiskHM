@@ -16,7 +16,9 @@ describe('DiskTablePage', () => {
           {
             id: 'disk-sda',
             name: 'sda',
+            path: '/dev/sda',
             model: 'WD Red',
+            mounts: ['/srv/data'],
             powerState: 'sleeping',
             refreshFreshness: 'cached',
             unsupported: false,
@@ -26,6 +28,7 @@ describe('DiskTablePage', () => {
     );
 
     expect(screen.getByText('WD Red')).toBeInTheDocument();
+    expect(screen.getByText('/srv/data')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Refresh (wake disk)' })).toBeInTheDocument();
   });
 
@@ -36,6 +39,7 @@ describe('DiskTablePage', () => {
           {
             id: 'disk-sdb',
             name: 'sdb',
+            path: '/dev/sdb',
             model: 'Seagate IronWolf',
             powerState: 'active',
             refreshFreshness: 'cached',

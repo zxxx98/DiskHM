@@ -43,6 +43,12 @@ You can open the UI from:
 - the same machine: [http://127.0.0.1:9789](http://127.0.0.1:9789)
 - another machine on the same network: `http://<host-ip>:9789`
 
+Login behavior:
+
+- the UI prompts for the local access token from `/etc/diskhm/config.yaml`
+- after sign-in, the app opens the live `/disks` view
+- `/topology`, `/events`, and `/settings` are live routes backed by the daemon API
+
 Health check:
 
 ```bash
@@ -111,6 +117,10 @@ If you change the config:
 ```bash
 sudo systemctl restart diskhm.service
 ```
+
+Current login token note:
+
+- the field name is still `security.token_hash`, but the current implementation expects the configured plaintext token value
 
 ## Local development
 

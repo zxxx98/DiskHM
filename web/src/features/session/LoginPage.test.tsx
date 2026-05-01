@@ -12,7 +12,7 @@ describe('LoginPage', () => {
     vi.restoreAllMocks();
   });
 
-  it('submits the token to the login endpoint and navigates to topology on success', async () => {
+  it('submits the token to the login endpoint and navigates to disks on success', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(null, {
         status: 204,
@@ -27,7 +27,7 @@ describe('LoginPage', () => {
       <MemoryRouter initialEntries={['/']}>
         <Routes>
           <Route path="/" element={<LoginPage />} />
-          <Route path="/topology" element={<h1>Topology</h1>} />
+          <Route path="/disks" element={<h1>Disks</h1>} />
         </Routes>
       </MemoryRouter>,
     );
@@ -48,7 +48,7 @@ describe('LoginPage', () => {
         method: 'POST',
       }),
     );
-    expect(await screen.findByRole('heading', { name: 'Topology' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Disks' })).toBeInTheDocument();
     expect(getCsrfToken()).toBe('csrf-token');
   });
 });

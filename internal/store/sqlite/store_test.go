@@ -191,6 +191,59 @@ func TestAppendEventWithZeroCreatedAtUsesDatabaseDefault(t *testing.T) {
 	}
 }
 
+func TestStoreListEventsReturnsNewestFirst(t *testing.T) {
+	t.Parallel()
+
+	store, err := Open("file:test-store-list-events?mode=memory&cache=shared")
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer store.Close()
+
+	ctx := context.Background()
+	if err := store.UpsertDisk(ctx, domain.Disk{
+		ID:   "disk-sda",
+		Name: "sda",
+		Path: "/dev/sda",
+	}); err != nil {
+		t.Fatalf("UpsertDisk() error = %v", err)
+	}
+
+	older := time.Date(2026, time.May, 1, 10, 0, 0, 0, time.UTC)
+	newer := time.Date(2026, time.May, 1, 11, 0, 0, 0, time.UTC)
+	if err := store.AppendEvent(ctx, domain.Event{
+		DiskID:    "disk-sda",
+		Kind:      "older",
+		Message:   "older",
+		CreatedAt: older,
+	}); err != nil {
+		t.Fatalf("AppendEvent() older error = %v", err)
+	}
+	if err := store.AppendEvent(ctx, domain.Event{
+		DiskID:    "disk-sda",
+		Kind:      "newer",
+		Message:   "newer",
+		CreatedAt: newer,
+	}); err != nil {
+		t.Fatalf("AppendEvent() newer error = %v", err)
+	}
+
+	events, err := store.ListEvents(ctx, 10)
+	if err != nil {
+		t.Fatalf("ListEvents() error = %v", err)
+	}
+
+	if len(events) != 2 {
+		t.Fatalf("len(events) = %d, want 2", len(events))
+	}
+	if events[0].Kind != "newer" {
+		t.Fatalf("events[0].Kind = %q, want %q", events[0].Kind, "newer")
+	}
+	if events[1].Kind != "older" {
+		t.Fatalf("events[1].Kind = %q, want %q", events[1].Kind, "older")
+	}
+}
+
 func assertColumnDefault(t *testing.T, store *Store, table string, column string, want string) {
 	t.Helper()
 

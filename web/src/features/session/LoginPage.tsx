@@ -37,7 +37,7 @@ export function LoginPage() {
       }
 
       setCsrfToken(response.headers.get('X-CSRF-Token'));
-      navigate('/topology');
+      navigate('/disks');
     } catch {
       setCsrfToken(null);
       setErrorMessage('Sign-in failed because the DiskHM service could not be reached.');

@@ -38,7 +38,7 @@ func TestSettingsAllowsValidSessionCookie(t *testing.T) {
 		t.Fatalf("Content-Type = %q, want %q", got, "application/json")
 	}
 
-	if got := rec.Body.String(); got != `{"quiet_grace_seconds":10}` {
-		t.Fatalf("body = %q, want %q", got, `{"quiet_grace_seconds":10}`)
+	if got := rec.Body.String(); got != "{\"quiet_grace_seconds\":10}\n" {
+		t.Fatalf("body = %q, want %q", got, "{\"quiet_grace_seconds\":10}\n")
 	}
 }

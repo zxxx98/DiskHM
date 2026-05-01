@@ -51,4 +51,27 @@ describe('App', () => {
     expect(screen.queryByText('View scaffold pending backend integration.')).not.toBeInTheDocument();
     expect(screen.getByText('No topology nodes reported yet.')).toBeInTheDocument();
   });
+
+  it('renders real disks from the API on the disks route', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          '{"items":[{"id":"disk-sda","name":"sda","path":"/dev/sda","model":"WD Red","powerState":"unknown","refreshFreshness":"cached","unsupported":false,"mounts":["/srv/data"]}]}',
+          {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        ),
+      ),
+    );
+    window.history.pushState({}, '', '/disks');
+
+    renderApp();
+
+    expect(await screen.findByText('WD Red')).toBeInTheDocument();
+    expect(screen.getByText('/srv/data')).toBeInTheDocument();
+  });
 });

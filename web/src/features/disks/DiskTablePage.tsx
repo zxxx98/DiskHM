@@ -3,9 +3,13 @@ import { DiskRow } from './DiskRow';
 
 type DiskTablePageProps = {
   disks: DiskListItem[];
+  actionError?: string | null;
+  onSleepNow?: (diskID: string) => void;
+  onSleepLater?: (diskID: string) => void;
+  onWakeRefresh?: (diskID: string) => void;
 };
 
-export function DiskTablePage({ disks }: DiskTablePageProps) {
+export function DiskTablePage({ disks, actionError, onSleepNow, onSleepLater, onWakeRefresh }: DiskTablePageProps) {
   return (
     <main className="disk-page">
       <section className="disk-page__panel" aria-labelledby="disk-page-title">
@@ -19,6 +23,7 @@ export function DiskTablePage({ disks }: DiskTablePageProps) {
             disks are only touched on purpose.
           </p>
         </div>
+        {actionError ? <p role="alert">{actionError}</p> : null}
 
         <div className="disk-table-wrap">
           <table className="disk-table">
@@ -32,7 +37,13 @@ export function DiskTablePage({ disks }: DiskTablePageProps) {
             </thead>
             <tbody>
               {disks.map((disk) => (
-                <DiskRow key={disk.id} disk={disk} />
+                <DiskRow
+                  key={disk.id}
+                  disk={disk}
+                  onSleepLater={onSleepLater}
+                  onSleepNow={onSleepNow}
+                  onWakeRefresh={onWakeRefresh}
+                />
               ))}
             </tbody>
           </table>

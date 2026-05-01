@@ -2,11 +2,18 @@ package api
 
 import "net/http"
 
-func registerSettingsRoutes(mux *http.ServeMux) {
-	mux.Handle("GET /api/settings", requireSession(http.HandlerFunc(settingsHandler)))
+func registerSettingsRoutes(mux *http.ServeMux, deps Dependencies) {
+	mux.Handle("GET /api/settings", requireSession(http.HandlerFunc(settingsHandler(deps))))
 }
 
-func settingsHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write([]byte(`{"quiet_grace_seconds":10}`))
+func settingsHandler(deps Dependencies) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		settings, err := deps.Runtime.Settings(r.Context())
+		if err != nil {
+			writeAPIError(w, http.StatusInternalServerError, "internal_error", "failed to load settings")
+			return
+		}
+
+		writeJSON(w, http.StatusOK, settings)
+	}
 }

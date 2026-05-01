@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"math"
+	"time"
 
 	"github.com/example/diskhm/internal/domain"
 )
@@ -111,6 +112,44 @@ func (s *Store) AppendEvent(ctx context.Context, event domain.Event) error {
 		event.CreatedAt,
 	)
 	return err
+}
+
+func (s *Store) ListEvents(ctx context.Context, limit int) ([]domain.Event, error) {
+	rows, err := s.db.QueryContext(
+		ctx,
+		`SELECT id, disk_id, kind, message, created_at FROM events ORDER BY created_at DESC, id DESC LIMIT ?`,
+		limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var events []domain.Event
+	for rows.Next() {
+		var event domain.Event
+		var createdAt string
+		if err := rows.Scan(&event.ID, &event.DiskID, &event.Kind, &event.Message, &createdAt); err != nil {
+			return nil, err
+		}
+		event.CreatedAt, err = time.Parse(time.RFC3339Nano, createdAt)
+		if err != nil {
+			event.CreatedAt, err = time.Parse("2006-01-02 15:04:05", createdAt)
+			if err != nil {
+				event.CreatedAt, err = time.Parse("2006-01-02 15:04:05 -0700 MST", createdAt)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+		events = append(events, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return events, nil
 }
 
 func boolToInt(v bool) int {

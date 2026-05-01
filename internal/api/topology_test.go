@@ -38,7 +38,7 @@ func TestTopologyAllowsValidSessionCookie(t *testing.T) {
 		t.Fatalf("Content-Type = %q, want %q", got, "application/json")
 	}
 
-	if got := rec.Body.String(); got != `{"nodes":[],"edges":[]}` {
-		t.Fatalf("body = %q, want %q", got, `{"nodes":[],"edges":[]}`)
+	if got := rec.Body.String(); got != "{\"nodes\":[],\"edges\":[]}\n" {
+		t.Fatalf("body = %q, want %q", got, "{\"nodes\":[],\"edges\":[]}\n")
 	}
 }
