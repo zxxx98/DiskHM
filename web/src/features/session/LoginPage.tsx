@@ -1,9 +1,11 @@
 import { type FormEvent, useState } from 'react';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 import { http, setCsrfToken } from '../../lib/http';
 
 export function LoginPage() {
+  const navigate = useNavigate();
   const [token, setToken] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -35,7 +37,7 @@ export function LoginPage() {
       }
 
       setCsrfToken(response.headers.get('X-CSRF-Token'));
-      setMessage('Signed in. Local session is ready.');
+      navigate('/topology');
     } catch {
       setCsrfToken(null);
       setErrorMessage('Sign-in failed because the DiskHM service could not be reached.');

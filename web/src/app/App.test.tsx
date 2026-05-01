@@ -16,12 +16,12 @@ describe('App', () => {
     expect(screen.getByLabelText('Token')).toBeInTheDocument();
   });
 
-  it('renders the login shell directly regardless of location', () => {
+  it('renders the topology route when the location changes', () => {
     window.history.pushState({}, '', '/topology');
 
     render(<App />);
 
-    expect(screen.getByRole('heading', { name: 'DiskHM' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Topology' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Topology' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'DiskHM' })).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { getCsrfToken, setCsrfToken } from '../../lib/http';
@@ -11,7 +12,7 @@ describe('LoginPage', () => {
     vi.restoreAllMocks();
   });
 
-  it('submits the token to the login endpoint and confirms success', async () => {
+  it('submits the token to the login endpoint and navigates to topology on success', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(null, {
         status: 204,
@@ -22,7 +23,14 @@ describe('LoginPage', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<LoginPage />);
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/topology" element={<h1>Topology</h1>} />
+        </Routes>
+      </MemoryRouter>,
+    );
 
     fireEvent.change(screen.getByLabelText('Token'), {
       target: { value: 'dev-token' },
@@ -40,7 +48,7 @@ describe('LoginPage', () => {
         method: 'POST',
       }),
     );
-    expect(screen.getByText('Signed in. Local session is ready.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Topology' })).toBeInTheDocument();
     expect(getCsrfToken()).toBe('csrf-token');
   });
 });
