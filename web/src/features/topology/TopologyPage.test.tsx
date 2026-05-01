@@ -20,4 +20,12 @@ describe('TopologyPage', () => {
     expect(screen.getByText('/dev/sda')).toBeInTheDocument();
     expect(screen.getByText('1 edge')).toBeInTheDocument();
   });
+
+  it('renders an empty-state message when topology data is not available yet', () => {
+    render(<TopologyPage edges={[]} nodes={[]} />);
+
+    expect(screen.getByRole('heading', { name: 'Topology' })).toBeInTheDocument();
+    expect(screen.getByText('0 edges')).toBeInTheDocument();
+    expect(screen.getByText('No topology nodes reported yet.')).toBeInTheDocument();
+  });
 });

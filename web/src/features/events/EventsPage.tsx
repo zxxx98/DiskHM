@@ -20,6 +20,7 @@ export function EventsPage({ events = [] }: EventsPageProps) {
         </div>
 
         <ul aria-label="Event messages">
+          {events.length === 0 ? <li>No events received yet.</li> : null}
           {events.map((event) => (
             <li key={event.id}>{event.message}</li>
           ))}

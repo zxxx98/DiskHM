@@ -28,6 +28,7 @@ export function TopologyPage({ nodes, edges }: TopologyPageProps) {
         </div>
 
         <ul aria-label="Topology nodes">
+          {nodes.length === 0 ? <li>No topology nodes reported yet.</li> : null}
           {nodes.map((node) => (
             <li key={node.id}>{node.label}</li>
           ))}
